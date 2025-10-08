@@ -34,17 +34,23 @@ async def webhook(request: Request):
     except Exception:
         return JSONResponse({"error": "invalid json"}, status_code=400)
 
+    # DEBUG: confira se o app está lendo as variáveis corretas
+    print("DEBUG PHONE_NUMBER_ID:", PHONE_NUMBER_ID)
+    if ACCESS_TOKEN:
+        print("DEBUG ACCESS_TOKEN:", ACCESS_TOKEN[:8], "...", ACCESS_TOKEN[-8:])
+    else:
+        print("DEBUG ACCESS_TOKEN: (vazio)")
+
     try:
         entry = data["entry"][0]
         change = entry["changes"][0]
         value = change["value"]
         messages = value.get("messages", [])
         if not messages:
-            return {"status": "ignored"}  # não há mensagem do usuário
+            return {"status": "ignored"}
 
         from_number = messages[0]["from"]
 
-        # envia "oi" de volta usando a API do WhatsApp Cloud
         url = f"https://graph.facebook.com/v20.0/{PHONE_NUMBER_ID}/messages"
         payload = {
             "messaging_product": "whatsapp",
@@ -56,10 +62,10 @@ async def webhook(request: Request):
             "Authorization": f"Bearer {ACCESS_TOKEN}",
             "Content-Type": "application/json",
         }
+        print("DEBUG POST URL:", url)
         r = requests.post(url, headers=headers, json=payload)
         print("Resposta enviada:", r.status_code, r.text)
     except Exception as e:
         print("Erro ao processar/enviar:", repr(e))
 
     return {"status": "ok"}
-
